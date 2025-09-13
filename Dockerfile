@@ -5,7 +5,7 @@ FROM golang:1.22 AS build
 WORKDIR /app
 
 # Download dependencies first (faster builds)
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 
 # Copy the rest of the source and build the binary
