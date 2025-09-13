@@ -1,21 +1,25 @@
 # syntax=docker/dockerfile:1
 
-# ---- Build the Go app in ./api (this repo uses a submodule there) ----
-FROM golang:1.22 AS build
-WORKDIR /app
+# ---- Build the Go app that lives in ./api (submodule) ----
+FROM golang:1.23 AS build
+# Let Go auto-download the exact toolchain if needed
+ENV GOTOOLCHAIN=auto
+ENV GO111MODULE=on
+ENV CGO_ENABLED=0
 
-# Copy ONLY the api folder (where go.mod and main.go live)
+WORKDIR /app
+# Copy ONLY the API submodule (where go.mod and main.go are)
 COPY api/ ./api/
 
-# Build
+# Build the backend
 WORKDIR /app/api
+# Use the public Go proxy, then fall back direct
+RUN go env -w GOPROXY=https://proxy.golang.org,direct
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server .
+RUN GOOS=linux GOARCH=amd64 go build -o /server .
 
 # ---- Minimal runtime image ----
 FROM gcr.io/distroless/static-debian12
 EXPOSE 8080
 COPY --from=build /server /server
-
-# Start the API by default (we can override with flags for migrations later)
 ENTRYPOINT ["/server","--server"]
