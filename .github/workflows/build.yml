@@ -16,8 +16,15 @@ jobs:
       - name: Checkout (with submodules)
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
           fetch-depth: 0
+      - name: Show tree (diagnostic)
+        run: |
+          git submodule status || true
+          ls -la
+          echo "api/go.mod (first lines):"
+          sed -n '1,20p' api/go.mod || true
+
 
 
       - name: Set up Buildx
